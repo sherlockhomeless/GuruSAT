@@ -11,7 +11,7 @@ import (
 func main() {
 	satFormula := sat{}
 	satFormula.readFormula("./formulas/" + "easy")
-	solveDPLL(satFormula)
+	solveDPLLnaive(satFormula)
 }
 
 func (sat *sat) readFormula(path string) {
@@ -47,7 +47,7 @@ func (sat *sat) readFormula(path string) {
 
 }
 
-func solveDPLL(sat sat) bool {
+func solveDPLLnaive(sat sat) bool {
 	// Priorities: Solved - Fail - Backtrack - UP - PL - S
 
 	//Solved-Rule
@@ -69,14 +69,45 @@ func solveDPLL(sat sat) bool {
 	// Unit-Propagation necessary?
 
 	// Pure-Literal-Rule
+	var pureLiteral int
 	polarityList := make([]int8, sat.varsNum+1)
 	for _, clause := range sat.clauses {
-		for literal := range clause {
-			//TODO: weiter
+		for _, literal := range clause {
 			set := polarityList[literal]
+			if set == 0 {
+				if literal > 0 {
+					polarityList[literal] = 1
+				} else {
+					polarityList[literal] = -1
+				}
+				// Literal has only one polarity over all clauses
+			} else if (set > 0 && literal < 0) || (set < 0 && literal > 0) {
+				polarityList[literal] = -2
+			}
 		}
 	}
+	for literalNumber, literal := range polarityList {
+		if (literal == 1) || (literal == 0) {
+			pureLiteral = literalNumber
+			//TODO: Literal einsetzen
+			break
+		}
+
+	}
 	return false
+
+}
+
+func modifyClauses(sat sat, literal int){
+	removelistClauses := make([]int, sat.clauseNum/3)
+	removelistVariables := make([]int, sat.varsNum/10)
+	for clauseNumber, clause := range sat.clauses{
+		for _, clauseLiteral := range clause{
+			if clauseLiteral == literal{
+				removelistClauses = append(removelistClauses, clauseNumber)
+			}
+		}
+	}
 
 }
 
