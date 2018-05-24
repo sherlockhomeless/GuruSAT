@@ -61,6 +61,7 @@ func ModifyClauses(sat *sat, literal int) {
 			// Remove clause because it is made true through literal
 			if clauseLiteral == literal {
 				removelistClauses = append(removelistClauses, clauseNumber)
+				break // if one literal of disjunction true => whole clause is true
 			}
 			// Remove literal with opposite polarity since can't be part of the solution
 			if clauseLiteral == literal*-1 {
