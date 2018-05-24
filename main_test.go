@@ -3,11 +3,13 @@ package main
 import "testing"
 
 func TestModifyClauses(t *testing.T) {
+
 	/* Test-SAT-Formula:
 	   1 2 3
 	   1 2 3
 	--> Tests if satisfied formulas are correctly removed
 	*/
+
 	varsNum := 4
 	clausesNum := 2
 	clause1 := []int{1,2,3}
@@ -19,10 +21,12 @@ func TestModifyClauses(t *testing.T) {
 	if len(satProblem.clauses) != 0{
 		t.Fail()
 	}
+
 	/*
 	1 -2
 	-2
 	 */
+
 	varsNum = 4
 	clausesNum = 1
 	clause1 = []int{1,-2}
