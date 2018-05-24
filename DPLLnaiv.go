@@ -7,7 +7,7 @@ import (
 func solveDPLLnaive(sat sat, try int) bool {
 	// Priorities: Solved - Fail - Backtrack - UP - PL - S
 	if try != 0 {
-		modifyClauses(&sat, try)
+		ModifyClauses(&sat, try)
 	}
 	if solveRule(&sat) {
 		return true
@@ -48,7 +48,7 @@ func failRule(sat *sat) bool {
 func unitPropagationRule(sat *sat) {
 	for _, clause := range sat.clauses {
 		if len(clause) == 1 {
-			modifyClauses(sat, clause[0])
+			ModifyClauses(sat, clause[0])
 		}
 	}
 }
@@ -80,7 +80,7 @@ func pureLiteralRule(sat *sat) bool {
 	for literalNumber, literal := range polarityList {
 		if (literal == 1) || (literal == -1) {
 			pureLiteral = literalNumber
-			modifyClauses(sat, pureLiteral)
+			ModifyClauses(sat, pureLiteral)
 			break
 		}
 
@@ -89,7 +89,8 @@ func pureLiteralRule(sat *sat) bool {
 }
 
 func splitRule(satProblem *sat) bool {
-	literal := satProblem.clauses[0][0]
+	var literal int
+	literal = satProblem.clauses[0][0]
 	satProblem.values[makeIntAbsolute(literal)] = literal
 	if solveDPLLnaive(*satProblem, literal) {
 		return true

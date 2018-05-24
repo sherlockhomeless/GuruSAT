@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+
 func main() {
 	satFormula := sat{}
 	satFormula.readFormula("./formulas/" + "easy")
@@ -30,8 +31,8 @@ func (sat *sat) readFormula(path string) {
 			split := strings.Split(line, " ")
 			sat.varsNum, _ = strconv.Atoi(split[2])
 			sat.clauseNum, _ = strconv.Atoi(split[3])
-			fmt.Printf("Found %d variables and %d clauses", sat.varsNum, sat.clauseNum)
-			sat.values = make([]int, sat.varsNum) // set variables
+			fmt.Printf("Found %d variables and %d clauses\n", sat.varsNum, sat.clauseNum)
+			sat.values = make([]int, sat.varsNum +1)
 			sat.clauses = make([][]int, sat.clauseNum)
 		} else {
 			var varValue int
@@ -49,30 +50,40 @@ func (sat *sat) readFormula(path string) {
 }
 
 // Modifies the Clauseset sat.clauses according to value given to literal
-func modifyClauses(sat *sat, literal int) {
-	removelistClauses := make([]int, sat.clauseNum/3)
-	removelistVariables := make([]int, sat.varsNum/10)
+func ModifyClauses(sat *sat, literal int) {
+	// holds all the clauses that have to be deleted to represent new literal interpretation
+	//removelistClauses := make([]int, sat.clauseNum/3)
+	//removelistVariables := make([]int, sat.varsNum/10)
+	var removelistClauses []int
+	var removelistVariables []int
 	for clauseNumber, clause := range sat.clauses {
 		for literalNumber, clauseLiteral := range clause {
+			// Remove clause because it is made true through literal
 			if clauseLiteral == literal {
 				removelistClauses = append(removelistClauses, clauseNumber)
 			}
+			// Remove literal with opposite polarity since can't be part of the solution
 			if clauseLiteral == literal*-1 {
-				removelistVariables = append(removelistVariables, literalNumber)
+				removelistVariables = append(removelistVariables, literalNumber +1)
 			}
 		}
 		for _, removeVariable := range removelistVariables {
-			clause = append(clause[:removeVariable], clause[removeVariable+1:]...)
-		}
-		for _, removeClause := range removelistClauses{
-			if removeClause+1 < len(sat.clauses) {
-				sat.clauses = append(sat.clauses[:removeClause], sat.clauses[removeClause+1:]...)
+			if removeVariable + 1 <= len(clause) {
+				clause = append(clause[:removeVariable], clause[removeVariable+1:]...)
 			} else {
-				sat.clauses = sat.clauses[:len(sat.clauses)-1]
+				clause = clause[:len(clause)-1]
 			}
 		}
 	}
-	fmt.Printf("Literal set to %d", literal)
+	for _, removeClause := range removelistClauses{
+		if removeClause+1 < len(sat.clauses) {
+			sat.clauses = append(sat.clauses[:removeClause], sat.clauses[removeClause+1:]...)
+		} else {
+			sat.clauses = sat.clauses[:len(sat.clauses)-1]
+		}
+	}
+
+	fmt.Printf("Literal set to %d\n", literal)
 	sat.values[makeIntAbsolute(literal)] = literal
 
 }
@@ -88,3 +99,9 @@ func check(err error) {
 		panic(err)
 	}
 }
+
+/*func testSolve(){
+	sat := sat{}
+	sat.readFormula("/formulas/test_0")
+	solveDPLLnaive(sat, 0)
+}*/
