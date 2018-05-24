@@ -11,8 +11,9 @@ import (
 func main() {
 	satFormula := sat{}
 	satFormula.readFormula("./formulas/" + "easy")
-	solveDPLLnaive(satFormula)
+	solveDPLLnaive(satFormula,0)
 }
+
 
 func (sat *sat) readFormula(path string) {
 	formulaFile, err := os.Open(path)
@@ -30,7 +31,7 @@ func (sat *sat) readFormula(path string) {
 			sat.varsNum, _ = strconv.Atoi(split[2])
 			sat.clauseNum, _ = strconv.Atoi(split[3])
 			fmt.Printf("Found %d variables and %d clauses", sat.varsNum, sat.clauseNum)
-			sat.values = make([]int, 0) // set variables
+			sat.values = make([]int, sat.varsNum) // set variables
 			sat.clauses = make([][]int, sat.clauseNum)
 		} else {
 			var varValue int
@@ -47,67 +48,32 @@ func (sat *sat) readFormula(path string) {
 
 }
 
-func solveDPLLnaive(sat sat) bool {
-	// Priorities: Solved - Fail - Backtrack - UP - PL - S
-
-	//Solved-Rule
-	if len(sat.clauses) == 0 {
-		fmt.Print(sat.values)
-		return true
-	}
-
-	// Fail-Rule
-	if false {
-		fmt.Println("Formula unsatisfiable")
-	}
-
-	// Backtrack-Rule
-	if (sat.varsNum == len(sat.values)) && (len(sat.clauses) > 0) {
-		return false
-	}
-
-	// Unit-Propagation necessary?
-
-	// Pure-Literal-Rule
-	var pureLiteral int
-	polarityList := make([]int8, sat.varsNum+1)
-	for _, clause := range sat.clauses {
-		for _, literal := range clause {
-			set := polarityList[literal]
-			if set == 0 {
-				if literal > 0 {
-					polarityList[literal] = 1
-				} else {
-					polarityList[literal] = -1
-				}
-				// Literal has only one polarity over all clauses
-			} else if (set > 0 && literal < 0) || (set < 0 && literal > 0) {
-				polarityList[literal] = -2
-			}
-		}
-	}
-	for literalNumber, literal := range polarityList {
-		if (literal == 1) || (literal == 0) {
-			pureLiteral = literalNumber
-			//TODO: Literal einsetzen
-			break
-		}
-
-	}
-	return false
-
-}
-
-func modifyClauses(sat sat, literal int){
+// Modifies the Clauseset sat.clauses according to value given to literal
+func modifyClauses(sat *sat, literal int) {
 	removelistClauses := make([]int, sat.clauseNum/3)
 	removelistVariables := make([]int, sat.varsNum/10)
-	for clauseNumber, clause := range sat.clauses{
-		for _, clauseLiteral := range clause{
-			if clauseLiteral == literal{
+	for clauseNumber, clause := range sat.clauses {
+		for literalNumber, clauseLiteral := range clause {
+			if clauseLiteral == literal {
 				removelistClauses = append(removelistClauses, clauseNumber)
+			}
+			if clauseLiteral == literal*-1 {
+				removelistVariables = append(removelistVariables, literalNumber)
+			}
+		}
+		for _, removeVariable := range removelistVariables {
+			clause = append(clause[:removeVariable], clause[removeVariable+1:]...)
+		}
+		for _, removeClause := range removelistClauses{
+			if removeClause+1 < len(sat.clauses) {
+				sat.clauses = append(sat.clauses[:removeClause], sat.clauses[removeClause+1:]...)
+			} else {
+				sat.clauses = sat.clauses[:len(sat.clauses)-1]
 			}
 		}
 	}
+	fmt.Printf("Literal set to %d", literal)
+	sat.values[makeIntAbsolute(literal)] = literal
 
 }
 
