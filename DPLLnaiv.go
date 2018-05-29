@@ -2,10 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 )
 
 var solvedSAT *Sat
 
+
+//TODO: Aufrufverhalten? Großes Fragezeichen
 func SolveDPLLnaive(satProblem Sat, try int) bool {
 	// Priorities: Solved - Fail - Backtrack - UP - PL - S
 	if try != 0 {
@@ -15,15 +18,19 @@ func SolveDPLLnaive(satProblem Sat, try int) bool {
 		solvedSAT = &satProblem
 		return true
 	}
-	if failRule(&satProblem) {
+	// Backtrack-Rule; True if all variables are set and clauses are still left OR there are empty clauses which are not satisfiable anymore
+	if clausesContainEmptyClause(satProblem.clauses) {
+		color.Red("Starting Backtracking")
 		return false
 	}
+
 	if unitPropagationRule(&satProblem) {
 		return SolveDPLLnaive(satProblem, 0)
 	}
 	if PureLiteralRule(&satProblem) {
 		return SolveDPLLnaive(satProblem, 0)
 	}
+
 	// Split Rule
 	literal := satProblem.clauses[0][0]
 	satProblem.values[makeIntAbsolute(literal)] = literal
@@ -35,25 +42,22 @@ func SolveDPLLnaive(satProblem Sat, try int) bool {
 		return true
 	}
 
-	// Backtrack-Rule; True if all variables are set and clauses are still left OR there are empty clauses which are not satisfiable anymore
-	if clausesContainEmptyClause(satProblem.clauses) {
-		return false
-	}
-	return SolveDPLLnaive(satProblem, 0)
+	// ~ Fail-Regel
+	return false
 }
 
 //Solved-Rule
 func solveRule(satProblem *Sat) bool {
 	if len(satProblem.clauses) == 0 {
 		if DEBUG {
-			fmt.Printf("SAT solved with interpretation %v\n", satProblem.values)
+			color.Blue("SAT solved with interpretation %v\n", satProblem.values)
 		}
 		return true
 	}
 	return false
 }
 
-// Fail-Rule
+// Fail-Rule TODO
 func failRule(sat *Sat) bool {
 	// Solution has failed if empty clause is contained in clause-set
 	/*for _, clause := range sat.clauses {

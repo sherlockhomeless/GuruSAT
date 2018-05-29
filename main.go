@@ -9,15 +9,13 @@ import (
 )
 
 var DEBUG bool
-var formulas = []string{"easy","test_0","medium_satisfiable"}
+var formulas = []string{"easy", "test_0", "medium_satisfiable"}
+
 func main() {
 	DEBUG = true
 	satFormula := Sat{}
-	satFormula.readFormula("./formulas/" + formulas[0])
-	a := SolveDPLLnaive(satFormula, 0)
-	if a {
-		print("cool")
-	}
+	satFormula.readFormula("./formulas/" + formulas[2])
+	SolveDPLLnaive(satFormula, 0)
 }
 
 func (sat *Sat) readFormula(path string) {
@@ -39,7 +37,7 @@ func (sat *Sat) readFormula(path string) {
 			sat.values = make([]int, sat.varCount+1)
 			sat.clauses = make([][]int, sat.clauseCount)
 			counterPositive, counterNegative := make([]int, sat.varCount+1), make([]int, sat.varCount+1)
-			sat.counter = make([][]int,2,)
+			sat.counter = make([][]int, 2)
 			sat.counter[0] = counterPositive
 			sat.counter[1] = counterNegative
 		} else {
