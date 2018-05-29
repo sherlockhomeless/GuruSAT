@@ -36,7 +36,7 @@ func SolveDPLLnaive(satProblem Sat, try int) bool {
 	}
 
 	// Backtrack-Rule; True if all variables are set and clauses are still left OR there are empty clauses which are not satisfiable anymore
-	if (satProblem.varCount+1 == len(satProblem.values)) && (len(satProblem.clauses) > 0) || (clausesContainEmptyClause(satProblem.clauses)) {
+	if clausesContainEmptyClause(satProblem.clauses) {
 		return false
 	}
 	return SolveDPLLnaive(satProblem, 0)
@@ -78,73 +78,42 @@ func unitPropagationRule(sat *Sat) bool {
 }
 
 // Pure-Literal-Rule
-func PureLiteralRule(sat *Sat) bool {
+func PureLiteralRule(satProblem *Sat) bool {
+	//reset counter, TODO: implement changes clauses in modifyClauses
+	counterPositive, counterNegative := make([]int, satProblem.varCount+1), make([]int, satProblem.varCount+1)
+	satProblem.counter[0] = counterPositive
+	satProblem.counter[1] = counterNegative
 	var pureLiteral int
-	var polTracker PolarityTracker
-	polarityMap := map[int]PolarityTracker{}
 
-	for _, clause := range sat.clauses {
+	// count occurances of literals
+	for _, clause := range satProblem.clauses {
 		for _, literal := range clause {
-			polTracker = polarityMap[makeIntAbsolute(literal)]
-			//check if opposite polarity was found
-			if polTracker.isLiteralBipolar(literal) {
-				continue
+			if literal > 0 {
+				satProblem.counter[0][makeIntAbsolute(literal)]++
+			} else {
+				satProblem.counter[1][makeIntAbsolute(literal)]++
 			}
 		}
 	}
-
-	for index:= 1; index <= sat.varCount+1; index++{
-		polTracker = polarityMap[index]
-		if !polTracker.Both{
-			if polTracker.Pos{
-				pureLiteral = index
-			} else {
-				pureLiteral = index * -1
-			}
+	for index := range satProblem.counter[0] {
+		posCounter, negCounter := satProblem.counter[0][index], satProblem.counter[1][index]
+		// Positive or negative more then zero, the other 0
+		if posCounter > 0 && negCounter == 0 {
+			pureLiteral = index
+			break
+		} else if negCounter > 0 && posCounter == 0 {
+			pureLiteral = index * -1
+			break
 		}
+
 	}
 	if pureLiteral != 0 {
-		ModifyClauses(sat, pureLiteral)
+		ModifyClauses(satProblem, pureLiteral)
 		return true
 	} else {
 		return false
 	}
-}
 
-
-
-func pureLiteralRuleOld(sat *Sat) bool {
-	// holds the value from the list that check occurances of literals
-	var set int8
-	// List to keep track of positive/negative occurence of literal
-	polarityList := make([]int8, sat.varCount+1)
-	// checking all clauses and literals for their polarity
-	for _, clause := range sat.clauses {
-		for _, literal := range clause {
-			set = polarityList[makeIntAbsolute(literal)]
-			if set == 0 {
-				if literal > 0 {
-					polarityList[makeIntAbsolute(literal)] = 1
-				} else {
-					polarityList[makeIntAbsolute(literal)] = -1
-				}
-				// Literal has only one polarity over all clauses
-			} else if (set > 0 && literal < 0) || (set < 0 && literal > 0) {
-				polarityList[makeIntAbsolute(literal)] = -2
-			}
-		}
-	}
-	pureLiteral := 0
-	// checking polarity list for pure Literals
-	for literalNumber, literal := range polarityList {
-		if (literal == 1) || (literal == -1) {
-			pureLiteral = literalNumber
-			ModifyClauses(sat, pureLiteral * int(polarityList[literalNumber]))
-			return true
-		}
-
-	}
-	return false
 }
 
 func clausesContainEmptyClause(clauses [][]int) bool {

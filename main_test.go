@@ -9,7 +9,6 @@ func TestModifyClauses(t *testing.T) {
 	   1 2 3
 	--> Tests if satisfied formulas are correctly removed
 	*/
-
 	satProblem := constructSATProblem(&[]int{1, 2, 3}, &[]int{1, 2, 3})
 	ModifyClauses(satProblem, 1)
 
@@ -41,7 +40,6 @@ func TestSolveDPLLnaive(t *testing.T) {
 	1 2
 	-1 -2
 	 */
-	 t.Skip()
 	 satProblem := constructSATProblem(&[]int{1,2}, &[]int{-1,-2})
 	 if !SolveDPLLnaive(*satProblem,0){
 	 	t.Log("Couldn not solve simple SAT")

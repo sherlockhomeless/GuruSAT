@@ -13,7 +13,7 @@ var formulas = []string{"easy","test_0","medium_satisfiable"}
 func main() {
 	DEBUG = true
 	satFormula := Sat{}
-	satFormula.readFormula("./formulas/" + formulas[2])
+	satFormula.readFormula("./formulas/" + formulas[0])
 	a := SolveDPLLnaive(satFormula, 0)
 	if a {
 		print("cool")
@@ -38,6 +38,10 @@ func (sat *Sat) readFormula(path string) {
 			fmt.Printf("Found %d variables and %d clauses\n", sat.varCount, sat.clauseCount)
 			sat.values = make([]int, sat.varCount+1)
 			sat.clauses = make([][]int, sat.clauseCount)
+			counterPositive, counterNegative := make([]int, sat.varCount+1), make([]int, sat.varCount+1)
+			sat.counter = make([][]int,2,)
+			sat.counter[0] = counterPositive
+			sat.counter[1] = counterNegative
 		} else {
 			var varValue int
 			line = strings.Replace(line, " 0", "", 1)
@@ -59,8 +63,6 @@ func (sat *Sat) readFormula(path string) {
 // Modifies the Clauseset Sat.clauses according to value given to literal
 func ModifyClausesOld(sat *Sat, literal int) {
 	// holds all the clauses that have to be deleted to represent new literal interpretation
-	//removelistClauses := make([]int, Sat.clauseCount/3)
-	//removelistVariables := make([]int, Sat.varCount/10)
 	var removelistClauses []int
 	var removelistVariables []int
 	for clauseNumber, clause := range sat.clauses {
@@ -169,9 +171,3 @@ func check(err error) {
 		panic(err)
 	}
 }
-
-/*func testSolve(){
-	Sat := Sat{}
-	Sat.readFormula("/formulas/test_0")
-	SolveDPLLnaive(Sat, 0)
-}*/

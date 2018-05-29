@@ -9,7 +9,7 @@ func makeIntAbsolute(x int) int {
 
 func constructSATProblem(clauses ...*[]int) *Sat {
 	varCount, clauseCount := 0, 0
-	varAlreadyCounter := make (map[int]bool)
+	varAlreadyCounter := make(map[int]bool)
 	var clauseList [][]int
 	for _, clause := range clauses {
 		clauseList = append(clauseList[:], *clause)
@@ -22,21 +22,25 @@ func constructSATProblem(clauses ...*[]int) *Sat {
 		}
 	}
 	valList := make([]int, varCount+1)
-	return &Sat{varCount:varCount, clauseCount:clauseCount, clauses:clauseList, values:valList}
+	counter := make([][]int, 2)
+	pos, neg := make([]int, varCount+1), make([]int, varCount+1)
+	counter[0], counter [1] = pos, neg
+	return &Sat{varCount: varCount, clauseCount: clauseCount, clauses: clauseList, values: valList, counter:counter}
 }
 
 type Sat struct {
 	varCount, clauseCount int
 	clauses               [][]int // conjunctive clause set
 	values                []int   // variables set
+	counter               [][]int
 }
 
 type PolarityTracker struct {
 	Pos, Neg, Both bool
 }
 
-func (p *PolarityTracker) isLiteralBipolar(literal int) bool{
-	if literal > 0{
+func (p *PolarityTracker) isLiteralBipolar(literal int) bool {
+	if literal > 0 {
 		p.Pos = true
 	} else {
 		p.Neg = true
@@ -48,4 +52,3 @@ func (p *PolarityTracker) isLiteralBipolar(literal int) bool{
 		return false
 	}
 }
-
