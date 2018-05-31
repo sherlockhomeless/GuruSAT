@@ -9,16 +9,16 @@ import (
 )
 
 var DEBUG bool
-var formulas = []string{"easy", "test_0", "medium_satisfiable"}
+var formulas = []string{"easy", "test_0", "medium_satisfiable", "flat200-1.cnf"}
 
 func main() {
 	DEBUG = true
 	satFormula := Sat{}
-	satFormula.readFormula("./formulas/" + formulas[2])
-	SolveDPLLnaive(satFormula, 0)
+	satFormula.ReadFormula("./formulas/" + formulas[2])
+	fmt.Printf("SAT solvable: %t", SolveDPLLnaive(satFormula, 0))
 }
 
-func (sat *Sat) readFormula(path string) {
+func (sat *Sat) ReadFormula(path string) {
 	formulaFile, err := os.Open(path)
 	defer formulaFile.Close()
 	check(err)
@@ -37,7 +37,7 @@ func (sat *Sat) readFormula(path string) {
 			sat.values = make([]int, sat.varCount+1)
 			sat.clauses = make([][]int, sat.clauseCount)
 			counterPositive, counterNegative := make([]int, sat.varCount+1), make([]int, sat.varCount+1)
-			sat.counter = make([][]int, 2)
+			sat.counter = [2][]int{}
 			sat.counter[0] = counterPositive
 			sat.counter[1] = counterNegative
 		} else {
@@ -94,41 +94,6 @@ func ModifyClausesOld(sat *Sat, literal int) {
 	fmt.Printf("Literal set to %d\n", literal)
 	sat.values[makeIntAbsolute(literal)] = literal
 
-}
-
-func ModifyClauses(satProblem *Sat, literalSet int) {
-	deleteListClauses := make([]bool, satProblem.clauseCount)
-	deleteVariableIndex := -1
-	counter := 0
-	for clauseIndex, clause := range satProblem.clauses {
-		// Deletes clause if it was solved by literal set
-		if isClauseSolved(&clause, literalSet) {
-			deleteListClauses[clauseIndex] = true
-			counter++
-			if DEBUG {
-				fmt.Printf("Deleting clause %v because literal %d was set\n", clause, literalSet)
-			}
-			continue
-		}
-		deleteVariableIndex = doesClauseContainLiteralInOpPolarity(&clause, literalSet)
-		if deleteVariableIndex != -1 {
-			// Delets literal from clause if it has opposite polarity to literal set
-			if DEBUG {
-				fmt.Printf("Deleting literal %d from clause %v, because literal was set to %d\n", satProblem.clauses[clauseIndex][deleteVariableIndex], clause, literalSet)
-			}
-			satProblem.clauses[clauseIndex] = deleteLiteralFromClause(clause, deleteVariableIndex)
-
-		}
-	}
-	counter = 0
-	for index, clauseToDelete := range deleteListClauses {
-		if clauseToDelete {
-			satProblem.clauses = deleteClauseFromFormula(satProblem.clauses, index-counter)
-			counter++
-		}
-
-	}
-	satProblem.values[makeIntAbsolute(literalSet)] = literalSet
 }
 
 // Returns if clause is solved under current interpretation

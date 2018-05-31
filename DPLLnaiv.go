@@ -10,9 +10,13 @@ var solvedSAT *Sat
 
 //TODO: Aufrufverhalten? Großes Fragezeichen
 func SolveDPLLnaive(satProblem Sat, try int) bool {
-	// Priorities: Solved - Fail - Backtrack - UP - PL - S
 	if try != 0 {
 		ModifyClauses(&satProblem, try)
+	}
+	// Priorities: Solved - Fail - Backtrack - UP - PL - S
+	if DEBUG {
+		fmt.Printf("Values set: %v\n", satProblem.values)
+		fmt.Printf("Clauses left: %d\n", len(satProblem.clauses))
 	}
 	if solveRule(&satProblem) {
 		solvedSAT = &satProblem
@@ -34,16 +38,8 @@ func SolveDPLLnaive(satProblem Sat, try int) bool {
 	// Split Rule
 	literal := satProblem.clauses[0][0]
 	satProblem.values[makeIntAbsolute(literal)] = literal
-	if SolveDPLLnaive(satProblem, literal) {
-		return true
-	}
-	satProblem.values[makeIntAbsolute(literal)] = -1 * literal
-	if SolveDPLLnaive(satProblem, literal*-1) {
-		return true
-	}
-
-	// ~ Fail-Regel
-	return false
+	satPositive, satNegative := satProblem.DeepCopySAT(), satProblem.DeepCopySAT()
+	return SolveDPLLnaive(*satPositive, literal) || SolveDPLLnaive(*satNegative, literal *-1)
 }
 
 //Solved-Rule
