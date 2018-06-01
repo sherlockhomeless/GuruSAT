@@ -7,8 +7,6 @@ import (
 
 var solvedSAT *Sat
 
-
-//TODO: Aufrufverhalten? Großes Fragezeichen
 func SolveDPLLnaive(satProblem Sat, try int) bool {
 	if try != 0 {
 		ModifyClauses(&satProblem, try)
@@ -22,9 +20,11 @@ func SolveDPLLnaive(satProblem Sat, try int) bool {
 		solvedSAT = &satProblem
 		return true
 	}
-	// Backtrack-Rule; True if all variables are set and clauses are still left OR there are empty clauses which are not satisfiable anymore
+	// Backtrack-Rule;
 	if clausesContainEmptyClause(satProblem.clauses) {
-		color.Red("Starting Backtracking")
+		if DEBUG {
+			color.Red("Starting Backtracking")
+		}
 		return false
 	}
 
@@ -35,11 +35,41 @@ func SolveDPLLnaive(satProblem Sat, try int) bool {
 		return SolveDPLLnaive(satProblem, 0)
 	}
 
-	// Split Rule
+	return splitRules[CUR_SPLIT_RULE](&satProblem)
+
+}
+
+func splitRuleChronological(satProblem *Sat) bool {
 	literal := satProblem.clauses[0][0]
 	satProblem.values[makeIntAbsolute(literal)] = literal
 	satPositive, satNegative := satProblem.DeepCopySAT(), satProblem.DeepCopySAT()
-	return SolveDPLLnaive(*satPositive, literal) || SolveDPLLnaive(*satNegative, literal *-1)
+	return SolveDPLLnaive(*satPositive, literal) || SolveDPLLnaive(*satNegative, literal*-1)
+}
+
+func SplitRuleWithCoutingOfLiteralOccurances(satProblem *Sat) bool {
+	var max, literal int
+	var positiveLiteral bool
+	// array that contains the absolute value of the sum of the positive and negative occurances of a literal
+	// adjustedLiteralOccurances := make([]int, satProblem.varCount)
+	for index := range satProblem.counter[0] {
+		num := satProblem.counter[0][index] + satProblem.counter[1][0]
+		if num < 0 {
+			num = num * -1
+			positiveLiteral = false
+		}
+		if num > max {
+			max = num
+			if positiveLiteral {
+				literal = index
+			} else {
+				literal = index * -1
+			}
+		}
+		positiveLiteral = true
+	}
+	satPositive, satNegative := satProblem.DeepCopySAT(), satProblem.DeepCopySAT()
+	return SolveDPLLnaive(*satPositive, literal) || SolveDPLLnaive(*satNegative, literal*-1)
+
 }
 
 //Solved-Rule
@@ -50,17 +80,6 @@ func solveRule(satProblem *Sat) bool {
 		}
 		return true
 	}
-	return false
-}
-
-// Fail-Rule TODO
-func failRule(sat *Sat) bool {
-	// Solution has failed if empty clause is contained in clause-set
-	/*for _, clause := range sat.clauses {
-		if len(clause) == 0 {
-			return true
-		}
-	}*/
 	return false
 }
 
@@ -109,6 +128,9 @@ func PureLiteralRule(satProblem *Sat) bool {
 	}
 	if pureLiteral != 0 {
 		ModifyClauses(satProblem, pureLiteral)
+		if DEBUG {
+			color.Yellow("Pure Literal %d was found", pureLiteral)
+		}
 		return true
 	} else {
 		return false

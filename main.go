@@ -6,16 +6,41 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
+	"github.com/fatih/color"
 )
 
 var DEBUG bool
-var formulas = []string{"easy", "test_0", "medium_satisfiable", "flat200-1.cnf"}
-
+var CUR_SPLIT_RULE int
+var formulas = []string{"easy", "test_0", "medium_satisfiable", "flat200-1.cnf", "test_unsatisfiable"}
+var splitRules []func(*Sat)bool
 func main() {
 	DEBUG = true
 	satFormula := Sat{}
-	satFormula.ReadFormula("./formulas/" + formulas[2])
-	fmt.Printf("SAT solvable: %t", SolveDPLLnaive(satFormula, 0))
+	// choose which SAT-Formula to check
+
+	if len(os.Args)>1{
+		satPath := os.Args[1]
+		satFormula.ReadFormula(satPath)
+	} else {
+		satFormula.ReadFormula("formulas/" + formulas[3])
+
+	}
+	// choose which split-Rule
+	splitNaiv := splitRuleChronological
+	splitCounting := SplitRuleWithCoutingOfLiteralOccurances
+	splitRules = []func(sat *Sat)bool{splitCounting,splitNaiv}
+	for index := 0; index < len(splitRules); index++{
+		start := time.Now()
+		CUR_SPLIT_RULE = index
+		if SolveDPLLnaive(satFormula, 0) {
+			color.Blue("SAT satisfiable with interpretation: %v\n", solvedSAT.values)
+		} else {
+			color.Red("SAT unsatisfiable")
+		}
+		elapsed := time.Since(start)
+		fmt.Printf("Solving took %s with Split-Rule %d\n", elapsed, index)
+	}
 }
 
 func (sat *Sat) ReadFormula(path string) {
@@ -55,44 +80,6 @@ func (sat *Sat) ReadFormula(path string) {
 			formulaIndex++
 		}
 	}
-
-}
-
-// Modifies the Clauseset Sat.clauses according to value given to literal
-func ModifyClausesOld(sat *Sat, literal int) {
-	// holds all the clauses that have to be deleted to represent new literal interpretation
-	var removelistClauses []int
-	var removelistVariables []int
-	for clauseNumber, clause := range sat.clauses {
-		for literalNumber, clauseLiteral := range clause {
-			// Remove clause because it is made true through literal
-			if clauseLiteral == literal {
-				removelistClauses = append(removelistClauses, clauseNumber)
-				break // if one literal of disjunction true => whole clause is true
-			}
-			// Remove literal with opposite polarity since can't be part of the solution
-			if clauseLiteral == literal*-1 {
-				removelistVariables = append(removelistVariables, literalNumber+1)
-			}
-		}
-		for _, removeVariable := range removelistVariables {
-			if removeVariable+1 <= len(clause) {
-				clause = append(clause[:removeVariable], clause[removeVariable+1:]...)
-			} else {
-				clause = clause[:len(clause)-1]
-			}
-		}
-	}
-	for _, removeClause := range removelistClauses {
-		if removeClause+1 < len(sat.clauses) {
-			sat.clauses = append(sat.clauses[:removeClause], sat.clauses[removeClause+1:]...)
-		} else {
-			sat.clauses = sat.clauses[:len(sat.clauses)-1]
-		}
-	}
-
-	fmt.Printf("Literal set to %d\n", literal)
-	sat.values[makeIntAbsolute(literal)] = literal
 
 }
 

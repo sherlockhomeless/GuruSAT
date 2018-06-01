@@ -2,6 +2,18 @@ package main
 
 import "fmt"
 
+func CheckSolution (satProblem *Sat, solution []int ) bool{
+	var solved bool
+	for _, literal := range solution{
+		ModifyClauses(satProblem, literal)
+		if len(satProblem.clauses) == 0{
+			fmt.Printf("Solution found")
+			solved = true
+		}
+	}
+	return solved
+}
+
 func ModifyClauses(satProblem *Sat, literalSet int) {
 	deleteListClauses := make([]bool, satProblem.clauseCount)
 	deleteVariableIndex := -1
