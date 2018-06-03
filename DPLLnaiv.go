@@ -138,11 +138,3 @@ func PureLiteralRule(satProblem *Sat) bool {
 
 }
 
-func clausesContainEmptyClause(clauses [][]int) bool {
-	for _, clause := range clauses {
-		if len(clause) == 0 {
-			return true
-		}
-	}
-	return false
-}

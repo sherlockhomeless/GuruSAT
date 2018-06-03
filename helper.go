@@ -2,6 +2,7 @@ package main
 
 import "fmt"
 
+// checks if a given satProblem can be solved by a list of integers
 func CheckSolution (satProblem *Sat, solution []int ) bool{
 	var solved bool
 	for _, literal := range solution{
@@ -14,6 +15,7 @@ func CheckSolution (satProblem *Sat, solution []int ) bool{
 	return solved
 }
 
+// modifies the set of clauses of a satProblem by assining the literalSet
 func ModifyClauses(satProblem *Sat, literalSet int) {
 	deleteListClauses := make([]bool, satProblem.clauseCount)
 	deleteVariableIndex := -1
@@ -48,6 +50,7 @@ func ModifyClauses(satProblem *Sat, literalSet int) {
 	}
 	satProblem.values[makeIntAbsolute(literalSet)] = literalSet
 }
+
 
 func makeIntAbsolute(x int) int {
 	if x < 0 {
@@ -84,8 +87,8 @@ type Sat struct {
 	counter               [2][]int
 }
 
-func (s *Sat) DeepCopySAT() *Sat{
 
+func (s *Sat) DeepCopySAT() *Sat{
 	// Initing empty Structure
 	newSATProblem := Sat{}
 	newSATProblem.varCount = s.varCount
@@ -110,3 +113,50 @@ func (s *Sat) DeepCopySAT() *Sat{
 
 }
 
+// Returns if clause is solved under current interpretation
+func isClauseSolved(clause *[]int, literal int) bool {
+	for _, curLiteral := range *clause {
+		if curLiteral == literal {
+			return true
+		}
+	}
+	return false
+}
+
+// Returns if clause contains literal in opposite polarity to set literal
+func doesClauseContainLiteralInOpPolarity(clause *[]int, literal int) int {
+	for index, curLiteral := range *clause {
+		if curLiteral*-1 == literal {
+			return index
+		}
+	}
+	return -1
+}
+
+func deleteLiteralFromClause(clause []int, index int) []int {
+	newClause := append(clause[:index], clause[index+1:]...)
+	if len(newClause) == 0 {
+		return nil
+	}
+	return newClause
+}
+
+func deleteClauseFromFormula(clauses [][]int, index int) (clausesnew [][]int) {
+	clausesnew = append(clauses[:index], clauses[index+1:]...)
+	return
+}
+
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func clausesContainEmptyClause(clauses [][]int) bool {
+	for _, clause := range clauses {
+		if len(clause) == 0 {
+			return true
+		}
+	}
+	return false
+}

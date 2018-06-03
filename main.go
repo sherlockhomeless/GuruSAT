@@ -14,11 +14,11 @@ var DEBUG bool
 var CUR_SPLIT_RULE int
 var formulas = []string{"easy", "test_0", "medium_satisfiable", "flat200-1.cnf", "test_unsatisfiable"}
 var splitRules []func(*Sat)bool
+
 func main() {
 	DEBUG = true
 	satFormula := Sat{}
 	// choose which SAT-Formula to check
-
 	if len(os.Args)>1{
 		satPath := os.Args[1]
 		satFormula.ReadFormula(satPath)
@@ -83,41 +83,3 @@ func (sat *Sat) ReadFormula(path string) {
 
 }
 
-// Returns if clause is solved under current interpretation
-func isClauseSolved(clause *[]int, literal int) bool {
-	for _, curLiteral := range *clause {
-		if curLiteral == literal {
-			return true
-		}
-	}
-	return false
-}
-
-// Returns if clause contains literal in opposite polarity to set literal
-func doesClauseContainLiteralInOpPolarity(clause *[]int, literal int) int {
-	for index, curLiteral := range *clause {
-		if curLiteral*-1 == literal {
-			return index
-		}
-	}
-	return -1
-}
-
-func deleteLiteralFromClause(clause []int, index int) []int {
-	newClause := append(clause[:index], clause[index+1:]...)
-	if len(newClause) == 0 {
-		return nil
-	}
-	return newClause
-}
-
-func deleteClauseFromFormula(clauses [][]int, index int) (clausesnew [][]int) {
-	clausesnew = append(clauses[:index], clauses[index+1:]...)
-	return
-}
-
-func check(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
