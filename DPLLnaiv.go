@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/fatih/color"
 )
 
@@ -13,8 +12,8 @@ func SolveDPLLnaive(satProblem Sat, try int) bool {
 	}
 	// Priorities: Solved - Fail - Backtrack - UP - PL - S
 	if DEBUG {
-		fmt.Printf("Values set: %v\n", satProblem.values)
-		fmt.Printf("Clauses left: %d\n", len(satProblem.clauses))
+		color.Yellow("Values set: %v\n", satProblem.values)
+		color.Yellow("Clauses left: %d\n", len(satProblem.clauses))
 	}
 	if solveRule(&satProblem) {
 		solvedSAT = &satProblem
@@ -23,7 +22,7 @@ func SolveDPLLnaive(satProblem Sat, try int) bool {
 	// Backtrack-Rule;
 	if clausesContainEmptyClause(satProblem.clauses) {
 		if DEBUG {
-			color.Red("Starting Backtracking")
+			color.Red("Starting Backtracking\n")
 		}
 		return false
 	}
@@ -88,7 +87,7 @@ func unitPropagationRule(sat *Sat) bool {
 		if len(clause) == 1 {
 			ModifyClauses(sat, clause[0])
 			if DEBUG {
-				fmt.Printf("UP used for clause %v\n", clause)
+				color.Green("UP used for clause %v\n", clause)
 			}
 			return true
 		}
@@ -129,7 +128,7 @@ func PureLiteralRule(satProblem *Sat) bool {
 	if pureLiteral != 0 {
 		ModifyClauses(satProblem, pureLiteral)
 		if DEBUG {
-			color.Yellow("Pure Literal %d was found", pureLiteral)
+			color.Green("Pure Literal %d was found\n", pureLiteral)
 		}
 		return true
 	} else {
