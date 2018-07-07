@@ -18,7 +18,7 @@ var splitRules []func(*Sat) bool
 
 func main() {
 	DEBUG = false
-	CUR_SPLIT_RULE = 1
+	CUR_SPLIT_RULE = 0
 	splitRules = []func(sat *Sat) bool{splitRuleChronological, SplitRuleWithCoutingOfLiteralOccurances, SplitRuleWithCoutingOfLiteralOccurancesAndShortClausePreferation}
 
 	satFormulas := make([]Sat, 5)

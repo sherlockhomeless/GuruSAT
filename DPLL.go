@@ -7,13 +7,13 @@ import (
 var solvedSAT *Sat
 
 func SolveDPLLnaive(satProblem Sat, try int) bool {
-	if try != 0 {
-		ModifyClauses(&satProblem, try)
-	}
-	// Priorities: Solved - Fail - Backtrack - UP - PL - S
 	if DEBUG {
 		color.Yellow("Values set: %v\n", satProblem.values)
 		color.Yellow("Clauses left: %d\n", len(satProblem.clauses))
+	}
+	// Priorities: Solved - Fail - Backtrack - UP - PL - S
+	if try != 0 {
+		ModifyClauses(&satProblem, try)
 	}
 	if solveRule(&satProblem) {
 		solvedSAT = &satProblem
@@ -67,25 +67,60 @@ func SplitRuleWithCoutingOfLiteralOccurances(satProblem *Sat) bool {
 		positiveLiteral = true
 	}
 	satPositive, satNegative := satProblem.DeepCopySAT(), satProblem.DeepCopySAT()
+	//TODO: If backtracking is needed here, must unsuitable next interpretation is chosen
 	return SolveDPLLnaive(*satPositive, literal) || SolveDPLLnaive(*satNegative, literal*-1)
 
 }
 
 func SplitRuleWithCoutingOfLiteralOccurancesAndShortClausePreferation(satProblem *Sat) bool {
-	var max, literal int
-	var positiveLiteral bool
 	// array that contains the absolute value of the sum of the positive and negative occurances of a literal
 	// adjustedLiteralOccurances := make([]int, satProblem.varCount)
-	//TODO: HIER WEITER
-	var clauseSort [10][]int
-	//Sorts Clauses depended on length
+	clauseSort := make([][][]int, 5)
+	//Sorts Clauses depended on length; e.g. clause [-12 21 9] is in clauseSort[2][120]
 	for _, clause := range satProblem.clauses {
-		if len(clause) >= 10 {
-			clauseSort[9] = append(clauseSort[9], clause)
-			continue
+		lengthOfClause := len(clause)
+		if lengthOfClause >= 5 {
+			clauseSort[4] = append(clauseSort[4], clause)
+		} else {
+			clauseSort[lengthOfClause-1] = append(clauseSort[lengthOfClause-1], clause)
 		}
-
 	}
+	//Adds weight to pure occurance counting; e.g. 2 in [2 13] counts
+	multiplicator := 2
+	for i := len(clauseSort) - 1; i >= 0; i-- {
+		for _, clause := range clauseSort[i] {
+			for _, variable := range clause {
+				if variable > 0 {
+					satProblem.counter[0][variable] = satProblem.counter[0][variable] + 1*multiplicator
+				} else {
+					varAbs := variable * -1
+					satProblem.counter[1][varAbs] = satProblem.counter[1][varAbs] + 1*multiplicator
+				}
+			}
+		}
+		multiplicator *= 2
+	}
+
+	var max, literal int
+	var positiveLiteral bool
+
+	for index := range satProblem.counter[0] {
+		num := satProblem.counter[0][index] + satProblem.counter[1][index]
+		if num < 0 {
+			num = num * -1
+			positiveLiteral = false
+		}
+		if num > max {
+			max = num
+			if positiveLiteral {
+				literal = index
+			} else {
+				literal = index * -1
+			}
+		}
+		positiveLiteral = true
+	}
+
 	satPositive, satNegative := satProblem.DeepCopySAT(), satProblem.DeepCopySAT()
 	return SolveDPLLnaive(*satPositive, literal) || SolveDPLLnaive(*satNegative, literal*-1)
 
