@@ -19,9 +19,15 @@ var splitRules []func(*Sat) bool
 func main() {
 	DEBUG = false
 	CUR_SPLIT_RULE = 0
+	if len(os.Args) > 2{
+		CUR_SPLIT_RULE,_ = strconv.Atoi(os.Args[2])
+	}
+
 	splitRules = []func(sat *Sat) bool{splitRuleChronological, SplitRuleWithCoutingOfLiteralOccurances, SplitRuleWithCoutingOfLiteralOccurancesAndShortClausePreferation}
 
-	satFormulas := make([]Sat, 5)
+	files,_ := ioutil.ReadDir(".")
+	formulaCount := len(files)
+	satFormulas := make([]Sat, formulaCount)
 	// choose which SAT-Formula to check
 	if len(os.Args) > 1 {
 		// this solves all formulas in the cwd
