@@ -19,7 +19,7 @@ var splitRules []func(*Sat) bool
 func main() {
 	DEBUG = false
 	CUR_SPLIT_RULE = 1
-	splitRules = []func(sat *Sat) bool{splitRuleChronological, SplitRuleWithCoutingOfLiteralOccurances}
+	splitRules = []func(sat *Sat) bool{splitRuleChronological, SplitRuleWithCoutingOfLiteralOccurances, SplitRuleWithCoutingOfLiteralOccurancesAndShortClausePreferation}
 
 	satFormulas := make([]Sat, 5)
 	// choose which SAT-Formula to check
@@ -38,26 +38,6 @@ func main() {
 		satFormulas[0].ReadFormula("formulas/" + formulas[0])
 
 	}
-
-	/*
-		// choose which split-Rule
-		splitNaiv := splitRuleChronological
-		splitCounting := SplitRuleWithCoutingOfLiteralOccurances
-
-		splitRules = []func(sat *Sat)bool{splitCounting,splitNaiv}
-
-		for index := 0; index < len(splitRules); index++{
-			start := time.Now()
-			CUR_SPLIT_RULE = index
-			if SolveDPLLnaive(satFormulas, 0) {
-				color.Blue("SAT satisfiable with interpretation: %v\n", solvedSAT.values)
-			} else {
-				color.Red("SAT unsatisfiable")
-			}
-			elapsed := time.Since(start)
-			fmt.Printf("Solving took %s with Split-Rule %d\n", elapsed, index)
-		}
-	*/
 	color.Red("Start Solving")
 	for _, formula := range satFormulas {
 		if formula.varCount == 0 {
@@ -87,15 +67,13 @@ func (sat *Sat) ReadFormula(path string) {
 		if len(line) == 0 {
 			continue
 		}
-		if lineNotValid(line) {
-			continue
-		}
-		if line[0] == 'c' {
+		if line[0] == 'c' || line[0] == '%' || line[0] == '0' {
 			continue
 		} else if line[0] == 'p' {
-			split := strings.Split(line, " ")
-			sat.varCount, _ = strconv.Atoi(split[2])
-			sat.clauseCount, _ = strconv.Atoi(split[3])
+			line = strings.Replace(line, "  ", " ", 20)
+			splits := strings.Split(line, " ")
+			sat.varCount, _ = strconv.Atoi(splits[2])
+			sat.clauseCount, _ = strconv.Atoi(splits[3])
 			fmt.Printf("Found %d variables and %d clauses\n", sat.varCount, sat.clauseCount)
 			sat.values = make([]int, sat.varCount+1)
 			sat.clauses = make([][]int, sat.clauseCount)
@@ -103,6 +81,8 @@ func (sat *Sat) ReadFormula(path string) {
 			sat.counter = [2][]int{}
 			sat.counter[0] = counterPositive
 			sat.counter[1] = counterNegative
+		} else if lineNotValid(line) {
+			continue
 		} else {
 			var varValue int
 			line = strings.Replace(line, " 0", "", 1)
@@ -113,12 +93,14 @@ func (sat *Sat) ReadFormula(path string) {
 				if err != nil {
 					continue
 				}
+				if formulaIndex == len(sat.clauses) {
+					print(line + "\n")
+				}
 				sat.clauses[formulaIndex] = append(sat.clauses[formulaIndex], varValue)
 			}
 			formulaIndex++
 		}
 	}
-
 }
 
 func lineNotValid(l string) bool {
@@ -127,10 +109,10 @@ func lineNotValid(l string) bool {
 		for _, valChar := range validChars {
 			if char == valChar {
 				break
-			} else if valChar == '!'{
-				return false
+			} else if valChar == '!' {
+				return true
 			}
 		}
 	}
-	return true
+	return false
 }

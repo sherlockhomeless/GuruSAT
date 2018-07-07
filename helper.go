@@ -84,7 +84,7 @@ type Sat struct {
 	varCount, clauseCount int
 	clauses               [][]int // conjunctive clause set
 	values                []int   // variables set
-	counter               [2][]int
+	counter               [2][]int // contains the positive and negative occurances of each variable
 }
 
 

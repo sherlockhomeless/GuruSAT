@@ -51,7 +51,7 @@ func SplitRuleWithCoutingOfLiteralOccurances(satProblem *Sat) bool {
 	// array that contains the absolute value of the sum of the positive and negative occurances of a literal
 	// adjustedLiteralOccurances := make([]int, satProblem.varCount)
 	for index := range satProblem.counter[0] {
-		num := satProblem.counter[0][index] + satProblem.counter[1][0]
+		num := satProblem.counter[0][index] + satProblem.counter[1][index]
 		if num < 0 {
 			num = num * -1
 			positiveLiteral = false
@@ -65,6 +65,26 @@ func SplitRuleWithCoutingOfLiteralOccurances(satProblem *Sat) bool {
 			}
 		}
 		positiveLiteral = true
+	}
+	satPositive, satNegative := satProblem.DeepCopySAT(), satProblem.DeepCopySAT()
+	return SolveDPLLnaive(*satPositive, literal) || SolveDPLLnaive(*satNegative, literal*-1)
+
+}
+
+func SplitRuleWithCoutingOfLiteralOccurancesAndShortClausePreferation(satProblem *Sat) bool {
+	var max, literal int
+	var positiveLiteral bool
+	// array that contains the absolute value of the sum of the positive and negative occurances of a literal
+	// adjustedLiteralOccurances := make([]int, satProblem.varCount)
+	//TODO: HIER WEITER
+	var clauseSort [10][]int
+	//Sorts Clauses depended on length
+	for _, clause := range satProblem.clauses {
+		if len(clause) >= 10 {
+			clauseSort[9] = append(clauseSort[9], clause)
+			continue
+		}
+
 	}
 	satPositive, satNegative := satProblem.DeepCopySAT(), satProblem.DeepCopySAT()
 	return SolveDPLLnaive(*satPositive, literal) || SolveDPLLnaive(*satNegative, literal*-1)
@@ -136,4 +156,3 @@ func PureLiteralRule(satProblem *Sat) bool {
 	}
 
 }
-
